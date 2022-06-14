@@ -4,11 +4,10 @@ import sqlite3
 from time import time
 
 # All prompts the user can be prompted with
-PROMPTS = ["bap","boop","beep"]
+PROMPTS = ["a","b","c"]
 
 # Tutorial
-print("You have 1 second to type what prompt and click enter, if you fail, the run ends.")
-input("Press enter to start...")
+input("You have 1 second to type the prompt and click enter, if you fail, the run ends.\nPress enter to start...")
 
 # Number of prompts done correctly
 n = 0
@@ -16,7 +15,7 @@ n = 0
 alive = True
 while alive:
     # The prompt that will be used
-    pick = PROMPTS[random.randint(0, 2)]
+    pick = PROMPTS[random.randint(0, PROMPTS.__len__() - 1)]
     # The time that the prompt was asked
     inital = time()
     
@@ -28,4 +27,4 @@ while alive:
     else: n+=1
 
 # Print an X and then print the score.
-print(f'X \n{n}')
+print(f'\nX \n{n}')
