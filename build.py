@@ -18,9 +18,6 @@ cur.execute('''CREATE TABLE records (
                         REFERENCES users(user_id)
                 )''')
 
-# cur.execute("INSERT INTO users (username, password) VALUES ('bob','rats')")
-# cur.execute("INSERT INTO records (count, user_id) VALUES (69,1)")
-
 con.commit()
 
 con.close()

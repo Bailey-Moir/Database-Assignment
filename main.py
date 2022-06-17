@@ -2,7 +2,7 @@
 import random
 import sqlite3 as sql
 from time import time
-from xml.etree.ElementTree import SubElement
+import getpass
 
 def cast(val_fn, fn):
     sucess = False
@@ -26,13 +26,14 @@ uid = -1;
 shouldQuit = False
 
 while not shouldQuit:
-    match cast(lambda: input("(1) Play\n(2) Leaderboard\n(3) View User\n(4) Quit\n"), int):
+    # TODO Admin delete, and change own password
+    match cast(lambda: input("(1) Play\n(2) Leaderboard\n(3) View User\n(4) Create Account\n(5) Quit\n"), int):
         case 1:
             # If the user has not logged in yet in this session, get them to. If they fail, go back to menu.
             if uid == -1:
                 # Get details
                 inputted_username = input("username: ")
-                inputted_password = input("password: ")
+                inputted_password = getpass.getpass(prompt="password: ")
 
                 # Query
                 user_details = con.execute("""SELECT password, user_id
@@ -42,7 +43,7 @@ while not shouldQuit:
 
                 # Check if htey failed, if they didn't, see the session user.
                 if (user_details == None or user_details[0] != inputted_password):
-                    print("Incorrect username or password")
+                    print("Incorrect username or password.")
                 else: uid = user_details[1]
 
             # If the session user has been set, play the game
@@ -64,7 +65,7 @@ while not shouldQuit:
                     inital = time()
                     
                     # Asks the quesiton
-                    answer = input(pick + '\n')
+                    answer = input(pick + '\n').strip();
 
                     # If the prompt was asked more than a second ago or the answer isn't the as the prompt, then stop the loop.
                     if time() - inital > 1.5 or answer != pick: alive = False
@@ -100,7 +101,18 @@ while not shouldQuit:
             for i in range(0, len(records)):
                 print(f'#{i + 1} {records[i][0]}')
         
-        case 4: shouldQuit = True
+        case 4:
+            username = input("username: ")
+            password1 = getpass.getpass(prompt='password: ')
+            password2 = getpass.getpass(prompt='re-enter password: ')
+
+            if (password1 == password2):
+                uid = con.execute("INSERT INTO users (username, password) VALUES (?, ?) RETURNING user_id", [username, password1]).fetchone()[0]
+                print(f"Account '{username}' was created!")
+            else:
+                print("Passwords do not match.")
+
+        case 5: shouldQuit = True
 
 con.commit()
 con.close()
