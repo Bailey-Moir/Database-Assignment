@@ -16,35 +16,38 @@ def cast(val_fn, fn):
             sucess = True
     return final
 
+def login():
+    global uid
+    # Get details
+    inputted_username = input("username: ")
+    inputted_password = getpass.getpass(prompt="password: ")
+
+    # Query
+    user_details = con.execute("""SELECT password, user_id
+        FROM users
+        WHERE username = ?
+    """, [inputted_username]).fetchone()
+
+    # Check if htey failed, if they didn't, see the session user.
+    if (user_details == None or user_details[0] != inputted_password):
+        print("Incorrect username or password.")
+    else: uid = user_details[1]
+
+
 con = sql.connect('typing-test.db')
 cur = con.cursor()
 
 # The session user
-uid = -1;
+uid = -1
 
-# Whether the game should stop, i.e. whether it shuld stop going back to the main menu.
+# Whether the game should stop, i.e. whether it should stop going back to the main menu.
 shouldQuit = False
 
 while not shouldQuit:
-    # TODO Admin delete, and change own password
-    match cast(lambda: input("(1) Play\n(2) Leaderboard\n(3) View User\n(4) Create Account\n(5) Quit\n"), int):
+    match cast(lambda: input("(1) Play\n(2) Leaderboard\n(3) View User\n(4) Create Account\n(5) Change password\n(6) Quit\n"), int):
         case 1:
             # If the user has not logged in yet in this session, get them to. If they fail, go back to menu.
-            if uid == -1:
-                # Get details
-                inputted_username = input("username: ")
-                inputted_password = getpass.getpass(prompt="password: ")
-
-                # Query
-                user_details = con.execute("""SELECT password, user_id
-                    FROM users
-                    WHERE username = :name
-                """, [inputted_username]).fetchone()
-
-                # Check if htey failed, if they didn't, see the session user.
-                if (user_details == None or user_details[0] != inputted_password):
-                    print("Incorrect username or password.")
-                else: uid = user_details[1]
+            if uid == -1: login()
 
             # If the session user has been set, play the game
             if uid != -1:
@@ -65,7 +68,7 @@ while not shouldQuit:
                     inital = time()
                     
                     # Asks the quesiton
-                    answer = input(pick + '\n').strip();
+                    answer = input(pick + '\n').strip()
 
                     # If the prompt was asked more than a second ago or the answer isn't the as the prompt, then stop the loop.
                     if time() - inital > 1.5 or answer != pick: alive = False
@@ -94,7 +97,7 @@ while not shouldQuit:
             records = con.execute("""SELECT count
                 FROM records
                 INNER JOIN users on users.user_id = records.user_id
-                WHERE users.username = :name
+                WHERE users.username = ?
                 ORDER BY count DESC
             """, [searched_user]).fetchall()[:50]
             # Print all records
@@ -102,17 +105,32 @@ while not shouldQuit:
                 print(f'#{i + 1} {records[i][0]}')
         
         case 4:
+            # Get details
             username = input("username: ")
-            password1 = getpass.getpass(prompt='password: ')
-            password2 = getpass.getpass(prompt='re-enter password: ')
+            pass_one = getpass.getpass(prompt='password: ')
+            pass_two = getpass.getpass(prompt='re-enter password: ')
 
-            if (password1 == password2):
-                uid = con.execute("INSERT INTO users (username, password) VALUES (?, ?) RETURNING user_id", [username, password1]).fetchone()[0]
+            # If the passwords equal, create the account and set the current user.
+            if (pass_one == pass_two):
+                uid = con.execute("INSERT INTO users (username, password) VALUES (?, ?) RETURNING user_id", [username, pass_one]).fetchone()[0]
                 print(f"Account '{username}' was created!")
             else:
                 print("Passwords do not match.")
 
-        case 5: shouldQuit = True
+        case 5:
+            # If the user has not logged in yet in this session, get them to. If they fail, go back to menu.
+            if uid == -1: login()
+
+            # If the session user has been set, play the game
+            if uid != -1:
+                new_pass_one = getpass.getpass(prompt="new password:")
+                new_pass_two = getpass.getpass(prompt="re-enter new password:")
+
+                # If the new passwords equal, change the password of the current account.
+                if (new_pass_one == new_pass_two): con.execute("UPDATE users SET password = ? WHERE user_id = ?", [new_pass_one, uid])
+                else: print("Passwords do not match.")
+
+        case 6: shouldQuit = True
 
 con.commit()
 con.close()
