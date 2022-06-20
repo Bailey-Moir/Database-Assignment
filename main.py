@@ -1,9 +1,12 @@
-# typing test, like bop it but with text, high scores, users
+# This program is the file that the user interacts with. It is a game that improves your tpying and reaction speed.
 import random
 import sqlite3 as sql
+from string import hexdigits
 from time import time
 import getpass
+import hashlib
 
+# Casts a given value depending on a function.
 def cast(val_fn, fn):
     sucess = False
     final = fn(0)
@@ -16,20 +19,21 @@ def cast(val_fn, fn):
             sucess = True
     return final
 
+# Logs the user in.
 def login():
     global uid
-    # Get details
+    # Get details.
     inputted_username = input("username: ")
-    inputted_password = getpass.getpass(prompt="password: ")
+    hashed_inputted_password = hashlib.sha256(getpass.getpass(prompt="password: ").encode()).hexdigest()
 
-    # Query
+    # Query.
     user_details = con.execute("""SELECT password, user_id
         FROM users
         WHERE username = ?
     """, [inputted_username]).fetchone()
 
     # Check if htey failed, if they didn't, see the session user.
-    if (user_details == None or user_details[0] != inputted_password):
+    if (user_details == None or user_details[0] != hashed_inputted_password):
         print("Incorrect username or password.")
     else: uid = user_details[1]
 
@@ -37,7 +41,7 @@ def login():
 con = sql.connect('typing-test.db')
 cur = con.cursor()
 
-# The session user
+# The session user.
 uid = -1
 
 # Whether the game should stop, i.e. whether it should stop going back to the main menu.
@@ -49,25 +53,25 @@ while not shouldQuit:
             # If the user has not logged in yet in this session, get them to. If they fail, go back to menu.
             if uid == -1: login()
 
-            # If the session user has been set, play the game
+            # If the session user has been set, play the game.
             if uid != -1:
-                # All prompts the user can be prompted with
+                # All prompts the user can be prompted with.
                 PROMPTS = ["able", "acid", "aged", "also", "area", "army", "away", "baby", "back", "ball", "band", "bank", "base", "bath", "bear", "beat", "been", "beer", "bell", "belt", "best", "bill", "bird", "blow", "blue", "boat", "body", "bomb", "bond", "bone", "book", "boom", "born", "boss", "both", "bowl", "bulk", "burn", "bush", "busy", "call", "calm", "came", "camp", "card", "care", "case", "cash", "cast", "cell", "chat", "chip", "city", "club", "coal", "coat", "code", "cold", "come", "cook", "cool", "cope", "copy", "core", "cost", "crew", "crop", "dark", "data", "date", "dawn", "days", "dead", "deal", "dean", "dear", "debt", "deep", "deny", "desk", "dial", "dick", "diet", "disc", "disk", "does", "done", "door", "dose", "down", "draw", "drew", "drop", "drug", "dual", "duke", "dust", "duty", "each", "earn", "ease", "east", "easy", "edge", "else", "even", "ever", "evil", "exit", "face", "fact", "fail", "fair", "fall", "farm", "fast", "fate", "fear", "feed", "feel", "feet", "fell", "felt", "file", "fill", "film", "find", "fine", "fire", "firm", "fish", "five", "flat", "flow", "food", "foot", "ford", "form", "fort", "four", "free", "from", "fuel", "full", "fund", "gain", "game", "gate", "gave", "gear", "gene", "gift", "girl", "give", "glad", "goal", "goes", "gold", "Golf", "gone", "good", "gray", "grew", "grey", "grow", "gulf", "hair", "half", "hall", "hand", "hang", "hard", "harm", "hate", "have", "head", "hear", "heat", "held", "hell", "help", "here", "hero", "high", "hill", "hire", "hold", "hole", "holy", "home", "hope", "host", "hour", "huge", "hung", "hunt", "hurt", "idea", "inch", "into", "iron", "item", "jack", "jane", "jean", "john", "join", "jump", "jury", "just", "keen", "keep", "kent", "kept", "kick", "kill", "kind", "king", "knee", "knew", "know", "lack", "lady", "laid", "lake", "land", "lane", "last", "late", "lead", "left", "less", "life", "lift", "like", "line", "link", "list", "live", "load", "loan", "lock", "logo", "long", "look", "lord", "lose", "loss", "lost", "love", "luck", "made", "mail", "main", "make", "male", "many", "Mark", "mass", "matt", "meal", "mean", "meat", "meet", "menu", "mere", "mike", "mile", "milk", "mill", "mind", "mine", "miss", "mode", "mood", "moon", "more", "most", "move", "much", "must", "name", "navy", "near", "neck", "need", "news", "next", "nice", "nick", "nine", "none", "nose", "note", "okay", "once", "only", "onto", "open", "oral", "over", "pace", "pack", "page", "paid", "pain", "pair", "palm", "park", "part", "pass", "past", "path", "peak", "pick", "pink", "pipe", "plan", "play", "plot", "plug", "plus", "poll", "pool", "poor", "port", "post", "pull", "pure", "push", "race", "rail", "rain", "rank", "rare", "rate", "read", "real", "rear", "rely", "rent", "rest", "rice", "rich", "ride", "ring", "rise", "risk", "road", "rock", "role", "roll", "roof", "room", "root", "rose", "rule", "rush", "ruth", "safe", "said", "sake", "sale", "salt", "same", "sand", "save", "seat", "seed", "seek", "seem", "seen", "self", "sell", "send", "sent", "sept", "ship", "shop", "shot", "show", "shut", "sick", "side", "sign", "site", "size", "skin", "slip", "slow", "snow", "soft", "soil", "sold", "sole", "some", "song", "soon", "sort", "soul", "spot", "star", "stay", "step", "stop", "such", "suit", "sure", "take", "tale", "talk", "tall", "tank", "tape", "task", "team", "tech", "tell", "tend", "term", "test", "text", "than", "that", "them", "then", "they", "thin", "this", "thus", "till", "time", "tiny", "told", "toll", "tone", "tony", "took", "tool", "tour", "town", "tree", "trip", "true", "tune", "turn", "twin", "type", "unit", "upon", "used", "user", "vary", "vast", "very", "vice", "view", "vote", "wage", "wait", "wake", "walk", "wall", "want", "ward", "warm", "wash", "wave", "ways", "weak", "wear", "week", "well", "went", "were", "west", "what", "when", "whom", "wide", "wife", "wild", "will", "wind", "wine", "wing", "wire", "wise", "wish", "with", "wood", "word", "wore", "work", "yard", "yeah", "year", "your", "zero", "zone"]
 
                 # Tutorial
                 input("You have 1.5 second to type the prompt and click enter, if you fail, the run ends.\nPress enter to start...")
 
-                # Number of prompts done correctly
+                # Number of prompts done correctly.
                 n = 0
                 # Whether the user is still alive or not; if the run has failed yet.
                 alive = True
                 while alive:
-                    # The prompt that will be used
+                    # The prompt that will be used.
                     pick = PROMPTS[random.randint(0, PROMPTS.__len__() - 1)]
-                    # The time that the prompt was asked
+                    # The time that the prompt was asked.
                     inital = time()
                     
-                    # Asks the quesiton
+                    # Asks the quesiton.
                     answer = input(pick + '\n').strip()
 
                     # If the prompt was asked more than a second ago or the answer isn't the as the prompt, then stop the loop.
@@ -80,18 +84,18 @@ while not shouldQuit:
                 con.execute("INSERT INTO records (count, user_id) VALUES (?, ?)", [n, uid])
         
         case 2:
-            # Query
+            # Query.
             records = con.execute("""SELECT count, records.user_id, username
                 FROM records
                 INNER JOIN users on users.user_id = records.user_id
                 ORDER BY records.count DESC
             """).fetchall()[:50]
-            # Print all records
+            # Print all records.
             for i in range(0,len(records)): 
                 print(f'#{i + 1} {records[i][2]}: {records[i][0]}') 
 
         case 3:
-            # The user requested to view
+            # The user requested to view.
             searched_user = input("Username of user: ")
             # Query
             records = con.execute("""SELECT count
@@ -100,15 +104,15 @@ while not shouldQuit:
                 WHERE users.username = ?
                 ORDER BY count DESC
             """, [searched_user]).fetchall()[:50]
-            # Print all records
+            # Print all records.
             for i in range(0, len(records)):
                 print(f'#{i + 1} {records[i][0]}')
         
         case 4:
             # Get details
             username = input("username: ")
-            pass_one = getpass.getpass(prompt='password: ')
-            pass_two = getpass.getpass(prompt='re-enter password: ')
+            pass_one = hashlib.sha256(getpass.getpass(prompt='password: ').encode()).hexdigest()
+            pass_two = hashlib.sha256(getpass.getpass(prompt='re-enter password: ').encode()).hexdigest()
 
             # If the passwords equal, create the account and set the current user.
             if (pass_one == pass_two):
@@ -121,10 +125,10 @@ while not shouldQuit:
             # If the user has not logged in yet in this session, get them to. If they fail, go back to menu.
             if uid == -1: login()
 
-            # If the session user has been set, play the game
+            # If the session user has been set, play the game.
             if uid != -1:
-                new_pass_one = getpass.getpass(prompt="new password:")
-                new_pass_two = getpass.getpass(prompt="re-enter new password:")
+                new_pass_one = hashlib.sha256(getpass.getpass(prompt="new password:").encode()).hexdigest()
+                new_pass_two = hashlib.sha256(getpass.getpass(prompt="re-enter new password:").encode()).hexdigest()
 
                 # If the new passwords equal, change the password of the current account.
                 if (new_pass_one == new_pass_two): con.execute("UPDATE users SET password = ? WHERE user_id = ?", [new_pass_one, uid])
