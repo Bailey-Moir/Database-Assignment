@@ -76,11 +76,16 @@ while not shouldQuit:
             id_two = input("re-enter user id: ")
 
             # If the two usernames are the same, delete hte user if it can be found.
-            if (id_one == id_two):
-                try:
-                    con.execute("DELETE FROM users WHERE user_id = ?", [id_one])
-                except:
-                    print("User not found!")
+            if (con.execute("""SELECT 1
+                FROM users
+                WHERE users.user_id = ?
+            """, [id_one]).fetchone() == None):
+                print ("User not found!")
+            elif (id_one != id_two):
+                print("IDs do not match.")
+            else:
+                con.execute("DELETE FROM users WHERE user_id = ?", [id_one])
+                print("User deleted.")
 
         case 4:
             # Get details
@@ -88,11 +93,16 @@ while not shouldQuit:
             record_two = input("re-enter record id: ")
 
             # If the two record ids are the same, delete the record if it can be found.
-            if (record_one == record_two):
-                try:
-                    con.execute("DELETE FROM records WHERE record_id = ?", [record_one])
-                except:
-                    print("Record not found!")
+            if (con.execute("""SELECT 1
+                FROM records
+                WHERE records.record_id = ?
+            """, [record_one]).fetchone() == None):
+                print ("Record not found!")
+            elif (record_one != record_two):
+                print("IDs do not match.")
+            else:
+                con.execute("DELETE FROM records WHERE record_id = ?", [record_one])
+                print("Record deleted.")
                     
         case 5: shouldQuit = True
 
