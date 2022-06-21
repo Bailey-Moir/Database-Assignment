@@ -49,7 +49,7 @@ shouldQuit = False
 
 while not shouldQuit:
     match cast(lambda: input("(1) Play\n(2) Leaderboard\n(3) View User\n(4) Create Account\n(5) Change password\n(6) Quit\n"), int):
-        case 1:
+        case 1: # Play.
             # If the user has not logged in yet in this session, get them to. If they fail, go back to menu.
             if uid == -1: login()
 
@@ -83,7 +83,7 @@ while not shouldQuit:
 
                 con.execute("INSERT INTO records (count, user_id) VALUES (?, ?)", [n, uid])
         
-        case 2:
+        case 2: # Leaderboard.
             # Query.
             records = con.execute("""SELECT count, records.user_id, username
                 FROM records
@@ -94,10 +94,10 @@ while not shouldQuit:
             for i in range(0,len(records)): 
                 print(f'#{i + 1} {records[i][2]}: {records[i][0]}') 
 
-        case 3:
+        case 3: # View User.
             # The user requested to view.
             searched_user = input("Username of user: ")
-            # Query
+            # Query.
             records = con.execute("""SELECT count
                 FROM records
                 INNER JOIN users on users.user_id = records.user_id
@@ -108,20 +108,24 @@ while not shouldQuit:
             for i in range(0, len(records)):
                 print(f'#{i + 1} {records[i][0]}')
         
-        case 4:
-            # Get details
+        case 4: # Create Account.
+            # Get details.
             username = input("username: ")
             pass_one = hashlib.sha256(getpass.getpass(prompt='password: ').encode()).hexdigest()
             pass_two = hashlib.sha256(getpass.getpass(prompt='re-enter password: ').encode()).hexdigest()
 
-            # If the passwords equal, create the account and set the current user.
-            if (pass_one == pass_two):
-                uid = con.execute("INSERT INTO users (username, password) VALUES (?, ?) RETURNING user_id", [username, pass_one]).fetchone()[0]
-                print(f"Account '{username}' was created!")
-            else:
+            if (con.execute("""SELECT 1
+                FROM users
+                WHERE users.username = ?
+            """, [username]).fetchone() != None): # If a user with that name already exists, tell user.
+                print("A user with that username already exists.")
+            elif (pass_one != pass_two): # If the two passwords do not match, tell the user.
                 print("Passwords do not match.")
+            else: # If none of the previous are true, create the user, set the current user to the new user, and tell user that the new user was created.
+                uid = con.execute("INSERT INTO users (username, password) VALUES (?, ?) RETURNING user_id", [username, pass_one]).fetchone()[0]
+                print(f"User '{username}' was created!")
 
-        case 5:
+        case 5: # Change Password.
             # If the user has not logged in yet in this session, get them to. If they fail, go back to menu.
             if uid == -1: login()
 
