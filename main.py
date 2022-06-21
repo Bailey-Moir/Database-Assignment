@@ -114,6 +114,7 @@ while not shouldQuit:
             pass_one = hashlib.sha256(getpass.getpass(prompt='password: ').encode()).hexdigest()
             pass_two = hashlib.sha256(getpass.getpass(prompt='re-enter password: ').encode()).hexdigest()
 
+            # If there is no account with the given name and the passwords match, create the account.
             if (con.execute("""SELECT 1
                 FROM users
                 WHERE users.username = ?
